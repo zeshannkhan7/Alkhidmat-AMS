@@ -556,9 +556,9 @@ tbody td{padding:9px 12px;vertical-align:middle;}
         <div class="rp-panel">
           <div class="rp-panel-box">
             <div class="rp-panel-title">Actions</div>
-            <button class="btn btn-p" style="width:100%;" onclick="rcSaveRec()">💾 Save Receipt</button>
-            <button class="btn btn-o" style="width:100%;" onclick="window.print()">🖨️ Print</button>
-            <button class="btn btn-a" style="width:100%;" onclick="rcDuplicate()">📋 Duplicate</button>
+            <button class="btn btn-p" style="width:100%;" id="rc-save-btn" onclick="rcSaveRec()">💾 Save Receipt</button>
+            <button class="btn btn-o" style="width:100%;" onclick="rcPrint()">🖨️ Print</button>
+            <button class="btn btn-a" style="width:100%;" id="rc-dup-btn" style="display:none;" onclick="rcDuplicate()">📋 Duplicate</button>
             <button class="btn btn-o" style="width:100%;" onclick="rcCloseModal()">✕ Close</button>
           </div>
           <div class="rp-panel-box" style="font-size:0.78rem;color:var(--gray);line-height:1.8;">
@@ -1315,14 +1315,7 @@ function rcBuildReceipt(d) {
     '</div>'+
   '</div>'+
   '<div class="rp-body">'+
-    '<div class="rp-sec-title">Recipient Details</div>'+
-    '<div class="rp-row">'+
-      '<div class="rp-field" style="flex:2.2"><div class="rp-lbl">Name</div><div class="rp-val">'+(d.name||'')+'</div></div>'+
-      '<div class="rp-field" style="flex:1.8"><div class="rp-lbl">CNIC</div><div class="rp-val">'+(d.cnic||'')+'</div></div>'+
-      '<div class="rp-field" style="flex:1.4"><div class="rp-lbl">Care Of</div><div class="rp-val">'+(d.careof||'')+'</div></div>'+
-    '</div>'+
-    '<div class="rp-row">'+'<div class="rp-field"><div class="rp-lbl">Contact No.</div><div class="rp-val">'+(d.phone||'')+'</div></div>'+'<div class="rp-field"><div class="rp-lbl">Care Of</div><div class="rp-val">'+(d.careof||'')+'</div></div>'+'<div class="rp-field"><div class="rp-lbl">Address</div><div class="rp-val">'+(d.addr||'')+'</div></div>'+'</div>'+
-    '<hr class="rp-div">'+
+    '<div class="rp-sec-title">Recipient Details</div>'+'<div class="rp-row">'+'<div class="rp-field" style="flex:2"><div class="rp-lbl">Name</div><div class="rp-val">'+(d.name||'')+'</div></div>'+'<div class="rp-field" style="flex:1.8"><div class="rp-lbl">CNIC</div><div class="rp-val">'+(d.cnic||'')+'</div></div>'+'<div class="rp-field" style="flex:1.4"><div class="rp-lbl">Contact No.</div><div class="rp-val">'+(d.phone||'')+'</div></div>'+'</div>'+'<div class="rp-row">'+'<div class="rp-field" style="flex:1.4"><div class="rp-lbl">Care Of</div><div class="rp-val">'+(d.careof||'')+'</div></div>'+'<div class="rp-field" style="flex:2"><div class="rp-lbl">Address</div><div class="rp-val">'+(d.addr||'')+'</div></div>'+'</div>'+'<hr class="rp-div">'+
     '<div class="rp-sec-title">Payment Details</div>'+
     '<div class="rp-row" style="align-items:flex-end;">'+
       '<div class="rp-field" style="flex:0 0 auto;width:110px;"><div class="rp-lbl">Amount</div><div class="rp-val box big">'+parseInt(d.amt||0).toLocaleString()+'/-</div></div>'+
@@ -1351,11 +1344,62 @@ function rcBuildReceipt(d) {
   '<div class="rp-footer">Alkhidmat Foundation Islamabad &nbsp;|&nbsp; Service To Humanity With Integrity &nbsp;|&nbsp; Doc No. '+d.docno+'</div>';
 }
 
+function rcPrint() {
+  var paperHTML = document.getElementById('rp-paper').innerHTML;
+  var win = window.open('', '_blank', 'width=800,height=700');
+  win.document.write(
+    '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+    '<title>Alkhidmat Receipt</title>' +
+    '<style>' +
+    'body{margin:0;padding:20px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#111;}' +
+    '#rp-paper{width:100%;}' +
+    '.rp-head{display:flex;align-items:stretch;border-bottom:2.5px solid #0057A8;}' +
+    '.rp-head-left{padding:10px 14px;display:flex;align-items:center;gap:10px;flex:1;}' +
+    '.rp-logo{width:56px;height:56px;object-fit:contain;}' +
+    '.rp-org-name{font-size:14px;font-weight:700;color:#003f7d;}' +
+    '.rp-org-sub{font-size:8px;color:#64748b;letter-spacing:.8px;text-transform:uppercase;margin-top:1px;}' +
+    '.rp-head-right{border-left:1px solid #dde6f0;padding:8px 12px;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;gap:4px;min-width:180px;}' +
+    '.rp-docno-txt{font-size:8px;color:#555;text-align:right;}' +
+    '.rp-docno-txt strong{color:#003f7d;font-size:9px;}' +
+    '.rp-title-bar{background:#0057A8;color:#fff;padding:6px 14px;display:flex;align-items:center;justify-content:space-between;}' +
+    '.rp-title-txt{font-size:18px;font-weight:700;letter-spacing:4px;}' +
+    '.rp-meta{display:flex;gap:20px;}' +
+    '.rp-meta-item{display:flex;flex-direction:column;align-items:flex-end;}' +
+    '.rp-meta-item .ml{font-size:7px;opacity:.75;text-transform:uppercase;letter-spacing:.5px;}' +
+    '.rp-meta-item .mv{font-size:11px;font-weight:700;}' +
+    '.rp-body{padding:10px 14px 8px;}' +
+    '.rp-sec-title{font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#0057A8;border-bottom:1px solid #deeaf8;padding-bottom:2px;margin-bottom:6px;}' +
+    '.rp-row{display:flex;gap:8px;margin-bottom:6px;}' +
+    '.rp-field{flex:1;display:flex;flex-direction:column;gap:1px;min-width:55px;}' +
+    '.rp-lbl{font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#666;}' +
+    '.rp-val{border-bottom:1px solid #888;padding:2px 0 1px;font-size:11px;min-height:17px;}' +
+    '.rp-val.box{border:1.5px solid #222;border-radius:2px;padding:2px 6px;font-weight:700;background:#f5f9fe;}' +
+    '.rp-val.big{font-size:13px;font-weight:700;color:#003f7d;}' +
+    '.rp-div{border:none;border-top:1px dashed #ccc;margin:6px 0;}' +
+    '.rp-sig-row{display:flex;gap:10px;}' +
+    '.rp-sig{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}' +
+    '.rp-sig-line{width:100%;border-bottom:1px solid #555;height:22px;}' +
+    '.rp-sig-lbl{font-size:7px;text-align:center;color:#555;text-transform:uppercase;letter-spacing:.4px;line-height:1.4;}' +
+    '.rp-sig-lbl strong{display:block;font-size:8px;color:#222;}' +
+    '.rp-footer{background:#f0f6fd;border-top:2px solid #0057A8;padding:4px 14px;text-align:center;font-size:8px;color:#003f7d;}' +
+    '</style></head><body>' +
+    '<div id="rp-paper">' + paperHTML + '</div>' +
+    '<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};<\/script>' +
+    '</body></html>'
+  );
+  win.document.close();
+}
+
 function rcDoPreview() {
   var d = rcGetForm();
   if (!d.name || !d.amt || !d.purpose) { toast('⚠️ Please fill Name, Amount and Purpose.'); return; }
   rcDraft = d;
   document.getElementById('rp-paper').innerHTML = rcBuildReceipt(d);
+  // New receipt: show Save, hide Duplicate
+  var saveBtn = document.getElementById('rc-save-btn');
+  var dupBtn  = document.getElementById('rc-dup-btn');
+  if (saveBtn) saveBtn.style.display = '';
+  if (dupBtn)  dupBtn.style.display  = 'none';
   document.getElementById('rcModal').classList.add('open');
 }
 
@@ -1507,6 +1551,11 @@ function rcViewRec(id) {
   if (!r) return;
   rcDraft = r;
   document.getElementById('rp-paper').innerHTML = rcBuildReceipt(r);
+  // Existing receipt: hide Save, show Duplicate
+  var saveBtn = document.getElementById('rc-save-btn');
+  var dupBtn  = document.getElementById('rc-dup-btn');
+  if (saveBtn) saveBtn.style.display = 'none';
+  if (dupBtn)  dupBtn.style.display  = '';
   document.getElementById('rcModal').classList.add('open');
 }
 
