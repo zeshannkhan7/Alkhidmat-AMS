@@ -193,30 +193,30 @@ tbody td{padding:9px 12px;vertical-align:middle;}
 .rp-head{display:flex;align-items:stretch;border-bottom:2.5px solid #0057A8;}
 .rp-head-left{padding:10px 14px;display:flex;align-items:center;gap:10px;flex:1;}
 .rp-logo{width:56px;height:56px;object-fit:contain;flex-shrink:0;}
-.rp-org-name{font-size:14px;font-weight:700;color:#003f7d;}
+.rp-org-name{font-size:14px;font-weight:900;color:#002060;}
 .rp-org-sub{font-size:8px;color:#64748b;letter-spacing:.8px;text-transform:uppercase;margin-top:1px;}
 .rp-head-right{border-left:1px solid #dde6f0;padding:8px 12px;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;gap:4px;min-width:180px;}
 .rp-docno-txt{font-size:8px;color:#555;text-align:right;}
 .rp-docno-txt strong{color:#003f7d;font-size:9px;}
-.rp-title-bar{background:#0057A8;color:#fff;padding:6px 14px;display:flex;align-items:center;justify-content:space-between;}
+.rp-title-bar{background:#0057A8;color:#fff;padding:6px 14px;display:flex;align-items:center;justify-content:space-between;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 .rp-title-txt{font-size:18px;font-weight:700;letter-spacing:4px;}
 .rp-meta{display:flex;gap:20px;}
 .rp-meta-item{display:flex;flex-direction:column;align-items:flex-end;}
 .rp-meta-item .ml{font-size:7px;opacity:.75;text-transform:uppercase;letter-spacing:.5px;}
 .rp-meta-item .mv{font-size:11px;font-weight:700;}
 .rp-body{padding:10px 14px 8px;}
-.rp-sec-title{font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#0057A8;border-bottom:1px solid #deeaf8;padding-bottom:2px;margin-bottom:6px;}
+.rp-sec-title{font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#003080;border-bottom:1.5px solid #b0c8e8;padding-bottom:2px;margin-bottom:6px;}
 .rp-row{display:flex;gap:8px;margin-bottom:6px;}
 .rp-field{flex:1;display:flex;flex-direction:column;gap:1px;min-width:55px;}
-.rp-lbl{font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#666;}
-.rp-val{border-bottom:1px solid #888;padding:2px 0 1px;font-size:11px;min-height:17px;}
+.rp-lbl{font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#333;}
+.rp-val{border-bottom:1.5px solid #555;padding:2px 0 1px;font-size:11px;min-height:17px;color:#000;font-weight:500;}
 .rp-val.box{border:1.5px solid #222;border-radius:2px;padding:2px 6px;font-weight:700;background:#f5f9fe;}
 .rp-val.big{font-size:13px;font-weight:700;color:#003f7d;}
 .rp-div{border:none;border-top:1px dashed #ccc;margin:6px 0;}
 .rp-sig-row{display:flex;gap:10px;}
 .rp-sig{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
 .rp-sig-line{width:100%;border-bottom:1px solid #555;height:22px;}
-.rp-sig-lbl{font-size:7px;text-align:center;color:#555;text-transform:uppercase;letter-spacing:.4px;line-height:1.4;}
+.rp-sig-lbl{font-size:7px;text-align:center;color:#333;text-transform:uppercase;letter-spacing:.4px;line-height:1.4;}
 .rp-sig-lbl strong{display:block;font-size:8px;color:#222;}
 .rp-footer{background:#f0f6fd;border-top:2px solid #0057A8;padding:4px 14px;text-align:center;font-size:8px;color:#003f7d;}
 .rp-overlay{position:fixed;inset:0;background:rgba(10,84,144,0.5);display:none;align-items:center;justify-content:center;z-index:2000;padding:16px;}
@@ -231,7 +231,7 @@ tbody td{padding:9px 12px;vertical-align:middle;}
 .rp-panel{width:175px;flex-shrink:0;display:flex;flex-direction:column;gap:10px;}
 .rp-panel-box{background:#fff;border:1px solid var(--light);border-radius:9px;padding:12px;display:flex;flex-direction:column;gap:7px;}
 .rp-panel-title{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gray);}
-@media print{body>*:not(#rp-print-area){display:none!important;}#rp-print-area,#rp-print-area *{visibility:visible!important;}#rp-print-area{position:fixed;top:0;left:0;width:210mm;background:#fff;z-index:99999;}}
+@media print{body>*:not(#rp-print-area){display:none!important;}#rp-print-area,#rp-print-area *{visibility:visible!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}#rp-print-area{position:fixed;top:0;left:0;width:210mm;background:#fff;z-index:99999;} .rp-title-bar{background:#0057A8 !important;color:#fff !important;} .rp-footer{background:#f0f6fd !important;}}
 
 </style>
 </head>
@@ -1351,37 +1351,37 @@ function rcPrint() {
     '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
     '<title>Alkhidmat Receipt</title>' +
     '<style>' +
-    'body{margin:0;padding:20px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#111;}' +
+    'body{margin:0;padding:20px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
     '#rp-paper{width:100%;}' +
     '.rp-head{display:flex;align-items:stretch;border-bottom:2.5px solid #0057A8;}' +
     '.rp-head-left{padding:10px 14px;display:flex;align-items:center;gap:10px;flex:1;}' +
     '.rp-logo{width:56px;height:56px;object-fit:contain;}' +
-    '.rp-org-name{font-size:14px;font-weight:700;color:#003f7d;}' +
+    '.rp-org-name{font-size:14px;font-weight:900;color:#002060;}' +
     '.rp-org-sub{font-size:8px;color:#64748b;letter-spacing:.8px;text-transform:uppercase;margin-top:1px;}' +
     '.rp-head-right{border-left:1px solid #dde6f0;padding:8px 12px;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;gap:4px;min-width:180px;}' +
     '.rp-docno-txt{font-size:8px;color:#555;text-align:right;}' +
     '.rp-docno-txt strong{color:#003f7d;font-size:9px;}' +
-    '.rp-title-bar{background:#0057A8;color:#fff;padding:6px 14px;display:flex;align-items:center;justify-content:space-between;}' +
+    '.rp-title-bar{background:#0057A8 !important;color:#fff !important;padding:6px 14px;display:flex;align-items:center;justify-content:space-between;-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
     '.rp-title-txt{font-size:18px;font-weight:700;letter-spacing:4px;}' +
     '.rp-meta{display:flex;gap:20px;}' +
     '.rp-meta-item{display:flex;flex-direction:column;align-items:flex-end;}' +
     '.rp-meta-item .ml{font-size:7px;opacity:.75;text-transform:uppercase;letter-spacing:.5px;}' +
     '.rp-meta-item .mv{font-size:11px;font-weight:700;}' +
     '.rp-body{padding:10px 14px 8px;}' +
-    '.rp-sec-title{font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#0057A8;border-bottom:1px solid #deeaf8;padding-bottom:2px;margin-bottom:6px;}' +
+    '.rp-sec-title{font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#003080;border-bottom:1.5px solid #b0c8e8;padding-bottom:2px;margin-bottom:6px;}' +
     '.rp-row{display:flex;gap:8px;margin-bottom:6px;}' +
     '.rp-field{flex:1;display:flex;flex-direction:column;gap:1px;min-width:55px;}' +
-    '.rp-lbl{font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#666;}' +
-    '.rp-val{border-bottom:1px solid #888;padding:2px 0 1px;font-size:11px;min-height:17px;}' +
+    '.rp-lbl{font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#333;}' +
+    '.rp-val{border-bottom:1.5px solid #555;padding:2px 0 1px;font-size:11px;min-height:17px;color:#000;font-weight:500;}' +
     '.rp-val.box{border:1.5px solid #222;border-radius:2px;padding:2px 6px;font-weight:700;background:#f5f9fe;}' +
     '.rp-val.big{font-size:13px;font-weight:700;color:#003f7d;}' +
     '.rp-div{border:none;border-top:1px dashed #ccc;margin:6px 0;}' +
     '.rp-sig-row{display:flex;gap:10px;}' +
     '.rp-sig{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}' +
     '.rp-sig-line{width:100%;border-bottom:1px solid #555;height:22px;}' +
-    '.rp-sig-lbl{font-size:7px;text-align:center;color:#555;text-transform:uppercase;letter-spacing:.4px;line-height:1.4;}' +
+    '.rp-sig-lbl{font-size:7px;text-align:center;color:#333;text-transform:uppercase;letter-spacing:.4px;line-height:1.4;}' +
     '.rp-sig-lbl strong{display:block;font-size:8px;color:#222;}' +
-    '.rp-footer{background:#f0f6fd;border-top:2px solid #0057A8;padding:4px 14px;text-align:center;font-size:8px;color:#003f7d;}' +
+    '.rp-footer{background:#f0f6fd !important;border-top:2px solid #0057A8;padding:4px 14px;text-align:center;font-size:8px;color:#003f7d !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
     '</style></head><body>' +
     '<div id="rp-paper">' + paperHTML + '</div>' +
     '<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};<\/script>' +
@@ -1481,8 +1481,9 @@ function rcUpdateDash() {
     '<div class="rc-stat"><div class="rc-stat-num">Rs. '+totAmt.toLocaleString()+'</div><div class="rc-stat-lbl">Total Disbursed</div></div>'+
     '<div class="rc-stat"><div class="rc-stat-num">'+mnth+'</div><div class="rc-stat-lbl">This Month</div></div>'+
     '<div class="rc-stat"><div class="rc-stat-num">'+cash+'</div><div class="rc-stat-lbl">Cash Payments</div></div>';
-  document.getElementById('rc-dash-tbl').innerHTML = rcBuildTbl(rcRecs.slice(0,8), false);
+  rcRenderInto('rc-dash-tbl', rcRecs.slice(0,8), false);
 }
+
 
 function rcRenderTbl() {
   var q = (document.getElementById('rc-srch').value||'').toLowerCase();
@@ -1491,60 +1492,88 @@ function rcRenderTbl() {
     var ok = !q || ['name','cnic','purpose','rno'].some(function(k){ return (r[k]||'').toLowerCase().indexOf(q)>-1; });
     return ok && (!m || r.method===m);
   });
-  document.getElementById('rc-rec-tbl').innerHTML = rcBuildTbl(f, true);
+  rcRenderInto('rc-rec-tbl', f, true);
 }
 
-function rcBuildTbl(data, actions) {
-  if (!data.length) return '<div style="text-align:center;padding:36px;color:var(--gray);">No records found.</div>';
-  var tb = document.createElement('table');
-  var hdr = document.createElement('thead');
+
+function rcRenderInto(containerId, data, actions) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  if (!data.length) {
+    container.innerHTML = '<div style="text-align:center;padding:36px;color:var(--gray);">No records found.</div>';
+    return;
+  }
+
+  var wrap  = document.createElement('div');
+  wrap.className = 'rct-wrap';
+  var tb    = document.createElement('table');
+  var hdr   = document.createElement('thead');
   var thRow = document.createElement('tr');
-  ['Receipt No.','Diary No.','Date','Name','Amount','Purpose','Method'].concat(actions?['Actions']:[]).forEach(function(h) {
-    var th = document.createElement('th'); th.textContent = h; thRow.appendChild(th);
+  ['Receipt No.','Diary No.','Date','Name','Amount (Rs.)','Purpose','Method'].concat(actions?['Actions']:[]).forEach(function(h) {
+    var th = document.createElement('th');
+    th.textContent = h;
+    thRow.appendChild(th);
   });
-  hdr.appendChild(thRow); tb.appendChild(hdr);
+  hdr.appendChild(thRow);
+  tb.appendChild(hdr);
+
   var body = document.createElement('tbody');
   data.forEach(function(r) {
     var tr = document.createElement('tr');
     var fd = r.date ? new Date(r.date+'T00:00:00').toLocaleDateString('en-GB') : '';
     var badge = document.createElement('span');
-    badge.className = r.method==='CASH'?'badge-cash':'badge-cheq';
-    badge.textContent = r.method;
-    [
-      {txt:'#'+r.rno, cls:'rct-no'},
-      {txt:r.diaryNo||'—'},
-      {txt:fd},
-      {txt:r.name||''},
-      {txt:'Rs. '+parseInt(r.amt||0).toLocaleString()},
-      {txt:r.purpose||''},
-      {el:badge}
+    badge.className  = r.method==='CASH' ? 'badge-cash' : (r.method==='CHEQUE' ? 'badge-cheq' : 'badge-cheq');
+    badge.textContent = r.methodLabel || r.method || '';
+
+    [{txt:'#'+r.rno, cls:'rct-no'}, {txt:r.diaryNo||'—'}, {txt:fd},
+     {txt:r.name||''}, {txt:'Rs. '+parseInt(r.amt||0).toLocaleString()},
+     {txt:r.purpose||''}, {el:badge}
     ].forEach(function(v) {
-      var td=document.createElement('td');
-      if(v.el){td.appendChild(v.el);}else{td.textContent=v.txt;}
-      if(v.cls)td.className=v.cls;
+      var td = document.createElement('td');
+      if (v.el) { td.appendChild(v.el); } else { td.textContent = v.txt; }
+      if (v.cls) td.className = v.cls;
       tr.appendChild(td);
     });
+
     if (actions) {
       var atd = document.createElement('td');
       var div = document.createElement('div');
-      div.style.cssText='display:flex;gap:4px;';
-      var vb=document.createElement('button'); vb.className='btn btn-sm btn-p'; vb.textContent='👁';
-      vb.addEventListener('click',(function(id){return function(){rcViewRec(id);};})(r.id));
-      var eb=document.createElement('button'); eb.className='btn btn-sm btn-o'; eb.textContent='✏️';
-      eb.addEventListener('click',(function(id){return function(){rcEditRec(id);};})(r.id));
-      var db=document.createElement('button'); db.className='btn btn-sm btn-r'; db.textContent='🗑';
-      db.addEventListener('click',(function(id){return function(){rcDelRec(id);};})(r.id));
-      div.appendChild(vb); div.appendChild(eb); div.appendChild(db);
-      atd.appendChild(div); tr.appendChild(atd);
+      div.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;';
+
+      var vb = document.createElement('button');
+      vb.className = 'btn btn-sm btn-p';
+      vb.textContent = '👁 View';
+      (function(id) { vb.addEventListener('click', function() { rcViewRec(id); }); })(r.id);
+
+      var eb = document.createElement('button');
+      eb.className = 'btn btn-sm btn-o';
+      eb.textContent = '✏️ Edit';
+      (function(id) { eb.addEventListener('click', function() { rcEditRec(id); }); })(r.id);
+
+      var db = document.createElement('button');
+      db.className = 'btn btn-sm btn-r';
+      db.textContent = '🗑 Del';
+      (function(id) { db.addEventListener('click', function() { rcDelRec(id); }); })(r.id);
+
+      div.appendChild(vb);
+      div.appendChild(eb);
+      div.appendChild(db);
+      atd.appendChild(div);
+      tr.appendChild(atd);
     }
     body.appendChild(tr);
   });
   tb.appendChild(body);
-  var wrap = document.createElement('div');
-  wrap.className = 'rct-wrap';
   wrap.appendChild(tb);
-  return wrap.outerHTML;
+  container.appendChild(wrap);
 }
+
+// Legacy alias
+function rcBuildTbl(data, actions) {
+  return '<div>Use rcRenderInto instead</div>';
+}
+
 
 function rcViewRec(id) {
   var r = rcRecs.find(function(x){return x.id===id;});
