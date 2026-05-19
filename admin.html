@@ -8,7 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="firebase-config.js"></script>
+<script src="firebase-config (1).js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -722,7 +722,7 @@ var AKF_USER_NAME = null;
 
 function initFirebase() {
   try {
-    firebase.initializeApp(AKF_FIREBASE_CONFIG);
+    firebase.initializeApp(firebaseconfig);
     db   = firebase.firestore();
     auth = firebase.auth();
 
@@ -2219,7 +2219,7 @@ function rcExportCSV() {
 
 // ══ INIT ══════════════════════════════════════════════════════
 window.addEventListener('load', function() {
-  if (typeof firebase !== 'undefined' && typeof AKF_FIREBASE_CONFIG !== 'undefined') {
+  if (typeof firebase !== 'undefined' && typeof firebaseconfig !== 'undefined') {
     initFirebase();
   } else {
     console.error('Firebase not loaded. Check firebase-config.js');
