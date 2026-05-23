@@ -5,7 +5,173 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Panel — Alkhidmat Foundation Islamabad</title>
 <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js">
+// ══ EDIT & DELETE (Super Admin only) ════════════════════════
+
+function openEdit(diaryNo) {
+  if (AKF_USER_ROLE !== 'super_admin') { toast('⛔ Only Super Admin can edit records.'); return; }
+  var apps = getApps();
+  var a = apps.find(function(x){ return x.diaryNo === diaryNo; });
+  if (!a) { toast('⚠️ Record not found.'); return; }
+
+  document.getElementById('editTitle').textContent = '✏️ Edit — ' + diaryNo;
+  document.getElementById('ed-diaryNo').value = diaryNo;
+  document.getElementById('ed-name').value    = a.name    || '';
+  document.getElementById('ed-cnic').value    = a.cnic    || '';
+  document.getElementById('ed-phone').value   = a.phone   || '';
+  document.getElementById('ed-type').value    = a.type    || 'Financial Help';
+  document.getElementById('ed-recby').value   = a.recBy   || '';
+  document.getElementById('ed-nazim').value   = a.nazim   || '';
+  document.getElementById('ed-uc').value      = a.uc      || '';
+  document.getElementById('ed-zone').value    = a.zone    || '';
+  document.getElementById('ed-status').value  = a.status  || 'Pending';
+  document.getElementById('ed-amount').value  = a.amount  || '';
+  document.getElementById('ed-remarks').value = a.remarks || '';
+
+  // Convert date strings to ISO for date inputs
+  function toISO(str) {
+    if (!str) return '';
+    if (/\d{4}-\d{2}-\d{2}/.test(str)) return str;
+    try { return new Date(str).toISOString().split('T')[0]; } catch(e){ return ''; }
+  }
+  document.getElementById('ed-recdate').value = toISO(a.receivingISO || a.receivingDate);
+  document.getElementById('ed-deldate').value = toISO(a.deliveredDate);
+
+  document.getElementById('editModal').classList.add('open');
+}
+
+function saveEdit() {
+  var diaryNo = document.getElementById('ed-diaryNo').value;
+  var name    = document.getElementById('ed-name').value.trim();
+  if (!name) { toast('⚠️ Name is required.'); return; }
+
+  var btn = document.querySelector('#editModal .btn-p');
+  btn.textContent = '⏳ Saving…'; btn.disabled = true;
+
+  var updates = {
+    name:          name,
+    cnic:          document.getElementById('ed-cnic').value.trim(),
+    phone:         document.getElementById('ed-phone').value.trim(),
+    type:          document.getElementById('ed-type').value,
+    recBy:         document.getElementById('ed-recby').value.trim(),
+    nazim:         document.getElementById('ed-nazim').value.trim(),
+    uc:            document.getElementById('ed-uc').value.trim(),
+    zone:          document.getElementById('ed-zone').value.trim(),
+    status:        document.getElementById('ed-status').value,
+    amount:        document.getElementById('ed-amount').value.trim(),
+    remarks:       document.getElementById('ed-remarks').value.trim(),
+    statusDate:    today(),
+    receivingDate: (function(){
+      var d = document.getElementById('ed-recdate').value;
+      if (!d) return today();
+      try { return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); } catch(e){ return today(); }
+    })(),
+    receivingISO:  document.getElementById('ed-recdate').value || todayISO(),
+    deliveredDate: (function(){
+      var d = document.getElementById('ed-deldate').value;
+      if (!d) return '';
+      try { return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); } catch(e){ return ''; }
+    })()
+  };
+
+  dbUpdateApp(diaryNo, updates).then(function(){
+    // Update local cache immediately
+    var apps = getApps();
+    var idx  = apps.findIndex(function(a){ return a.diaryNo === diaryNo; });
+    if (idx > -1) { apps[idx] = Object.assign(apps[idx], updates); saveApps(apps); if(appsCache){var ci=appsCache.findIndex(function(a){return a.diaryNo===diaryNo;});if(ci>-1)appsCache[ci]=Object.assign(appsCache[ci],updates);} }
+    document.getElementById('editModal').classList.remove('open');
+    toast('✅ ' + diaryNo + ' updated successfully!');
+    btn.textContent = '💾 Save Changes'; btn.disabled = false;
+    // Refresh current view
+    var activeSec = document.querySelector('.sec.active');
+    if (activeSec) {
+      var secId = activeSec.id.replace('sec-','');
+      if(secId==='master') renderMaster();
+      else if(secId==='files') renderFiles();
+      else if(secId==='dash') renderDash();
+    }
+  }).catch(function(e){
+    toast('❌ Save failed: ' + e.message);
+    btn.textContent = '💾 Save Changes'; btn.disabled = false;
+  });
+}
+
+function deleteApp(diaryNo) {
+  if (AKF_USER_ROLE !== 'super_admin') { toast('⛔ Only Super Admin can delete records.'); return; }
+  if (!diaryNo) return;
+  if (!confirm('Permanently delete application ' + diaryNo + '?\nThis cannot be undone.')) return;
+
+  var doDelete = function() {
+    if (!db) {
+      var apps = getApps().filter(function(a){ return a.diaryNo !== diaryNo; });
+      saveApps(apps); invalidateCache();
+      document.getElementById('editModal').classList.remove('open');
+      document.getElementById('viewModal').classList.remove('open');
+      toast('🗑 ' + diaryNo + ' deleted.');
+      renderDash(); renderMaster();
+      return;
+    }
+    db.collection('applications').doc(diaryNo).delete().then(function(){
+      var apps = getApps().filter(function(a){ return a.diaryNo !== diaryNo; });
+      saveApps(apps); invalidateCache();
+      document.getElementById('editModal').classList.remove('open');
+      document.getElementById('viewModal').classList.remove('open');
+      auditLog('delete', 'Deleted application ' + diaryNo);
+      toast('🗑 ' + diaryNo + ' permanently deleted.');
+      renderDash(); renderMaster();
+    }).catch(function(e){ toast('❌ Delete failed: ' + e.message); });
+  };
+  doDelete();
+}
+
+function openDeleteAll() {
+  if (AKF_USER_ROLE !== 'super_admin') { toast('⛔ Only Super Admin can delete all records.'); return; }
+  document.getElementById('delAllConfirmInput').value = '';
+  document.getElementById('delAllModal').classList.add('open');
+}
+
+function confirmDeleteAll() {
+  var input = document.getElementById('delAllConfirmInput').value.trim();
+  if (input !== 'DELETE ALL') { toast('⚠️ Please type DELETE ALL exactly to confirm.'); return; }
+
+  var btn = document.querySelector('#delAllModal .btn-r');
+  btn.textContent = '⏳ Deleting…'; btn.disabled = true;
+
+  if (!db) {
+    saveApps([]); invalidateCache();
+    localStorage.removeItem('akf_counter');
+    document.getElementById('delAllModal').classList.remove('open');
+    toast('🗑 All records deleted.');
+    renderDash(); btn.textContent='🗑 Yes, Delete Everything'; btn.disabled=false;
+    return;
+  }
+
+  // Delete in batches
+  function deleteBatch() {
+    db.collection('applications').limit(400).get().then(function(snap) {
+      if (snap.empty) {
+        saveApps([]); invalidateCache();
+        document.getElementById('delAllModal').classList.remove('open');
+        auditLog('delete', 'Deleted ALL application records');
+        toast('🗑 All records permanently deleted.');
+        renderDash();
+        btn.textContent='🗑 Yes, Delete Everything'; btn.disabled=false;
+        return;
+      }
+      var batch = db.batch();
+      snap.docs.forEach(function(d){ batch.delete(d.ref); });
+      batch.commit().then(deleteBatch).catch(function(e){
+        toast('❌ Error: ' + e.message);
+        btn.textContent='🗑 Yes, Delete Everything'; btn.disabled=false;
+      });
+    });
+  }
+  deleteBatch();
+}
+
+// ══ END EDIT & DELETE ════════════════════════════════════════
+
+</script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
@@ -270,6 +436,66 @@ tbody td{padding:9px 12px;vertical-align:middle;}
 .at-delete{background:#fde8e8;color:#8b1a1a;}
 .at-auth{background:#fff3cd;color:#7a4f00;}
 
+
+/* ══ PROFESSIONAL UI IMPROVEMENTS ══════════════════════════ */
+/* Responsive table wrapper */
+.twrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px;}
+table{width:100%;border-collapse:collapse;font-size:0.83rem;min-width:600px;}
+
+/* Sticky table header */
+thead{position:sticky;top:0;z-index:5;}
+
+/* Better card on mobile */
+@media(max-width:768px){
+  .main{padding:10px 8px;}
+  .shdr{flex-direction:column;align-items:flex-start;}
+  .srow{grid-template-columns:repeat(2,1fr);}
+  .fgrid{grid-template-columns:1fr;}
+  .ftabs{gap:5px;}
+  .ftab{padding:6px 10px;font-size:0.75rem;}
+  .ptabs{gap:4px;}
+  .ptab{padding:5px 9px;font-size:0.73rem;}
+  .btn-sm{padding:5px 8px;font-size:0.72rem;}
+  thead th{padding:8px 8px;font-size:0.68rem;}
+  tbody td{padding:7px 8px;font-size:0.8rem;}
+  .hdr-inner h1{font-size:1.1rem;}
+  .ntab{padding:10px 12px;font-size:0.78rem;}
+}
+
+/* Edit modal improvements */
+.edit-modal{max-width:680px;}
+.edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:600px){.edit-grid{grid-template-columns:1fr;}}
+.edit-section{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--blue);padding:8px 0 4px;border-bottom:1px solid var(--light);grid-column:1/-1;margin-top:6px;}
+
+/* Delete confirmation */
+.del-confirm{background:var(--rbg);border:1.5px solid var(--red);border-radius:8px;padding:14px 16px;margin-bottom:14px;}
+.del-confirm p{color:var(--red);font-weight:600;font-size:0.9rem;}
+
+/* Action buttons in table */
+.tbl-actions{display:flex;gap:3px;flex-wrap:nowrap;}
+
+/* Better scrollable sections */
+.sec{min-height:0;}
+.card-scroll{max-height:calc(100vh - 280px);overflow-y:auto;-webkit-overflow-scrolling:touch;}
+
+/* Status pill selector */
+.status-pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+.spill{padding:5px 12px;border-radius:20px;border:1.5px solid var(--light);cursor:pointer;font-size:0.78rem;font-weight:700;transition:all 0.15s;}
+.spill.pending{background:var(--abg);color:var(--amber);border-color:#e6a817;}
+.spill.approved{background:var(--gbg);color:var(--green);border-color:var(--green);}
+.spill.rejected{background:var(--rbg);color:var(--red);border-color:var(--red);}
+.spill.delivered{background:#e8f4fd;color:var(--navy);border-color:var(--navy);}
+.spill:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,0.1);}
+
+/* Toast improvement */
+.toast{bottom:16px;right:16px;left:16px;max-width:none;text-align:center;}
+@media(min-width:480px){.toast{left:auto;max-width:340px;text-align:left;}}
+
+/* Loading spinner in tables */
+.tbl-loading{text-align:center;padding:40px;color:var(--gray);}
+.tbl-loading .mini-spin{display:inline-block;width:24px;height:24px;border:2px solid var(--light);border-top-color:var(--blue);border-radius:50%;animation:spin 0.7s linear infinite;margin-bottom:8px;}
+
 </style>
 </head>
 <body>
@@ -433,7 +659,10 @@ tbody td{padding:9px 12px;vertical-align:middle;}
     <div class="sec" id="sec-master">
       <div class="shdr">
         <h2>Master Data — All Records</h2>
-        <button class="btn btn-p btn-sm" onclick="exportCSV()">⬇️ Export CSV</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-p btn-sm" onclick="exportCSV()">⬇️ Export CSV</button>
+          <button class="btn btn-r btn-sm" id="deleteAllBtn" style="display:none;" onclick="openDeleteAll()">🗑 Delete All</button>
+        </div>
       </div>
       <div class="ptabs" id="masterPurposeTabs"></div>
       <div class="srow2">
@@ -528,10 +757,11 @@ tbody td{padding:9px 12px;vertical-align:middle;}
           <div class="rc-fcard-hdr">🔏 Authorization</div>
           <div class="rc-fcard-body">
             <div class="rc-grid">
-              <div class="rc-fg"><label>Prepared By</label><input id="rc-prep" value="ZEESHAN"></div>
-              <div class="rc-fg"><label>Checked By</label><input id="rc-chkd" value="TAIMOOR"></div>
+              <div class="rc-fg"><label>Prepared By</label><input id="rc-prep" value="Arshid"></div>
+              <div class="rc-fg"><label>Checked By</label><input id="rc-chkd" placeholder="Supervisor name"></div>
               <div class="rc-fg"><label>Cashier</label><input id="rc-cash" placeholder="Cashier name"></div>
-          
+              <div class="rc-fg"><label>Behalf Of</label><input id="rc-behalf" placeholder="Organization / dept."></div>
+            </div>
           </div>
         </div>
         <div style="display:flex;gap:9px;justify-content:flex-end;padding-bottom:8px;">
@@ -649,7 +879,7 @@ tbody td{padding:9px 12px;vertical-align:middle;}
   <div class="modal">
     <div class="mtitle" id="vmTitle">Application Details</div>
     <div id="vmBody"></div>
-    <div class="brow" style="margin-top:14px;padding-top:12px;border-top:1px solid #eee;">
+    <div class="brow" style="margin-top:14px;padding-top:12px;border-top:1px solid #eee;" id="viewModalBtns">
       <button class="btn btn-o btn-sm" onclick="document.getElementById('viewModal').classList.remove('open')">Close</button>
     </div>
   </div>
@@ -700,6 +930,75 @@ tbody td{padding:9px 12px;vertical-align:middle;}
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- EDIT APPLICATION MODAL (Super Admin only) -->
+<div class="mbg" id="editModal" onclick="closeMod(event,'editModal')">
+  <div class="modal edit-modal">
+    <div class="mtitle" id="editTitle">✏️ Edit Application</div>
+    <div id="editBody">
+      <div class="edit-grid">
+        <div class="edit-section">Applicant Information</div>
+        <div class="fg"><label>Full Name <span class="req">*</span></label><input id="ed-name" placeholder="Full name"></div>
+        <div class="fg"><label>CNIC No.</label><input id="ed-cnic" placeholder="00000-0000000-0" maxlength="15"></div>
+        <div class="fg"><label>Contact No.</label><input id="ed-phone" placeholder="0300-0000000"></div>
+        <div class="fg"><label>Purpose <span class="req">*</span></label>
+          <select id="ed-type">
+            <option value="Marriage Help">💍 Marriage Help</option>
+            <option value="Financial Help">💰 Financial Help</option>
+            <option value="Educational Help">🎓 Educational Help</option>
+            <option value="Wheelchair">♿ Wheelchair</option>
+            <option value="Sewing Machine">🧵 Sewing Machine</option>
+            <option value="WASH Program">💧 WASH Program</option>
+          </select>
+        </div>
+        <div class="edit-section">Recommendation Details</div>
+        <div class="fg"><label>Recommended By</label><input id="ed-recby" placeholder="Recommending person"></div>
+        <div class="fg"><label>Nazim</label><input id="ed-nazim" placeholder="Nazim name"></div>
+        <div class="fg"><label>UC</label><input id="ed-uc" placeholder="Union Council"></div>
+        <div class="fg"><label>Zone</label><input id="ed-zone" placeholder="Zone"></div>
+        <div class="edit-section">Status &amp; Financial</div>
+        <div class="fg"><label>Status</label>
+          <select id="ed-status">
+            <option value="Pending">⏳ Pending</option>
+            <option value="Approved">✅ Approved</option>
+            <option value="Rejected">❌ Rejected</option>
+            <option value="Delivered/Paid">📦 Delivered/Paid</option>
+          </select>
+        </div>
+        <div class="fg"><label>Amount Approved (Rs.)</label><input id="ed-amount" placeholder="e.g. 50000"></div>
+        <div class="fg"><label>Receiving Date</label><input id="ed-recdate" type="date"></div>
+        <div class="fg"><label>Delivered Date</label><input id="ed-deldate" type="date"></div>
+        <div class="fg" style="grid-column:1/-1"><label>Remarks</label><textarea id="ed-remarks" placeholder="Remarks or notes..." style="min-height:60px;width:100%;"></textarea></div>
+      </div>
+    </div>
+    <input type="hidden" id="ed-diaryNo">
+    <div class="brow" style="margin-top:16px;padding-top:12px;border-top:1px solid #eee;">
+      <button class="btn btn-p" onclick="saveEdit()">💾 Save Changes</button>
+      <button class="btn btn-r btn-sm" onclick="deleteApp(document.getElementById('ed-diaryNo').value)">🗑 Delete This Record</button>
+      <button class="btn btn-o btn-sm" onclick="document.getElementById('editModal').classList.remove('open')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE ALL CONFIRMATION MODAL -->
+<div class="mbg" id="delAllModal" onclick="closeMod(event,'delAllModal')">
+  <div class="modal" style="max-width:420px;">
+    <div class="mtitle" style="color:var(--red);">⚠️ Delete All Records</div>
+    <div class="del-confirm">
+      <p>⚠️ This will permanently delete ALL application records from the database.</p>
+      <p style="margin-top:8px;">This action CANNOT be undone.</p>
+    </div>
+    <div class="fg" style="margin-bottom:14px;">
+      <label>Type <strong>DELETE ALL</strong> to confirm</label>
+      <input id="delAllConfirmInput" placeholder="Type: DELETE ALL" style="margin-top:6px;">
+    </div>
+    <div class="brow">
+      <button class="btn btn-r" onclick="confirmDeleteAll()">🗑 Yes, Delete Everything</button>
+      <button class="btn btn-o btn-sm" onclick="document.getElementById('delAllModal').classList.remove('open')">Cancel</button>
     </div>
   </div>
 </div>
@@ -793,6 +1092,9 @@ function showAdminApp() {
   var lb = document.querySelector('.logout-btn');
   if (lb) lb.title = 'Logged in as: ' + AKF_USER_NAME + ' (' + AKF_USER_ROLE + ')';
 
+  // Show delete all button for super admin only
+  var dab = document.getElementById('deleteAllBtn');
+  if (dab) dab.style.display = isSuperAdmin ? '' : 'none';
   auditLog('auth', 'Logged in as ' + AKF_USER_NAME);
   initPurposeTabs();
   renderDash();
@@ -873,27 +1175,52 @@ function saveApps(arr) {
 // ── FIRESTORE LISTENERS (real-time) ──────────────────────────
 var appsListener = null;
 
+var appsCache = null;
+var appsCacheTime = 0;
+var CACHE_TTL = 30000; // 30 seconds cache
+
 function startAppsListener(callback) {
-  if (appsListener) appsListener(); // unsubscribe previous
-  if (!db) { if (callback) callback(getApps()); return; }
-  appsListener = db.collection('applications')
+  // Use cache if fresh
+  var now = Date.now();
+  if (appsCache && (now - appsCacheTime) < CACHE_TTL) {
+    if (callback) callback(appsCache);
+    return;
+  }
+  // Show cached data immediately while loading
+  var cached = getApps();
+  if (cached.length && callback) callback(cached);
+
+  if (!db) { if (callback) callback(cached); return; }
+
+  // Fetch from Firestore
+  db.collection('applications')
     .orderBy('createdAt', 'desc')
-    .onSnapshot(function(snap) {
+    .get({ source: 'default' })
+    .then(function(snap) {
       var apps = snap.docs.map(function(d) {
         var data = d.data();
-        data.id  = d.id;
-        // Convert Firestore timestamp to string date
+        data.diaryNo = d.id;
         if (data.createdAt && data.createdAt.toDate) {
-          data.receivingISO = data.createdAt.toDate().toISOString().split('T')[0];
+          if (!data.receivingDate) {
+            data.receivingDate = data.createdAt.toDate().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+          }
         }
         return data;
       });
-      saveApps(apps); // cache for offline
+      appsCache = apps;
+      appsCacheTime = Date.now();
+      saveApps(apps);
       if (callback) callback(apps);
-    }, function(err) {
-      console.error('Apps listener error:', err);
+    })
+    .catch(function(err) {
+      console.error('Fetch error:', err);
       if (callback) callback(getApps());
     });
+}
+
+function invalidateCache() {
+  appsCache = null;
+  appsCacheTime = 0;
 }
 
 // ── CRUD OPERATIONS ───────────────────────────────────────────
@@ -911,6 +1238,7 @@ function dbAddApp(app) {
   data.createdByName = AKF_USER_NAME || 'unknown';
   return db.collection('applications').doc(app.diaryNo).set(data)
     .then(function() {
+      invalidateCache();
       auditLog('create', 'Registered application ' + app.diaryNo + ' for ' + app.name);
       return app;
     });
@@ -928,6 +1256,7 @@ function dbUpdateApp(diaryNo, updates) {
   updates.updatedByName = AKF_USER_NAME || 'unknown';
   return db.collection('applications').doc(diaryNo).update(updates)
     .then(function() {
+      invalidateCache();
       auditLog('update', 'Updated ' + diaryNo + ': ' + JSON.stringify(updates));
     });
 }
@@ -1270,9 +1599,17 @@ function importPreview() {
     var cnic   = g('cnic').replace(/[-\s]/g,'');
     var type   = (PURPOSE_MAP[(g('type')||'').toLowerCase().trim()] || g('type') || 'Financial Help');
     var status = g('status');
-    var statusMap = { approved:'Approved', rejected:'Rejected', pending:'Pending',
-                      delivered:'Delivered/Paid', 'delivered/paid':'Delivered/Paid' };
-    var normStatus = statusMap[(status||'').toLowerCase().trim()] || 'Pending';
+    var statusMap = {
+      'approved':'Approved', 'approve':'Approved', 'منظور':'Approved',
+      'rejected':'Rejected', 'reject':'Rejected', 'رد':'Rejected',
+      'pending':'Pending', 'زیر غور':'Pending',
+      'delivered':'Delivered/Paid', 'delivered/paid':'Delivered/Paid', 'paid':'Delivered/Paid',
+      'completed':'Delivered/Paid'
+    };
+    var rawStatus = (status||'').toLowerCase().trim();
+    var normStatus = statusMap[rawStatus] || 'Pending';
+    // If status column has value but no match, flag it
+    var statusWarning = (status && !statusMap[rawStatus]) ? ' [status unclear: '+status+']' : '';
 
     var isDup  = (cnic && existingCNICs.includes(cnic)) || existingNames.includes((name||'').toLowerCase().trim());
     var isMiss = !name;
@@ -1335,53 +1672,81 @@ function importConfirm() {
   btn.textContent = '⏳ Importing…';
 
   var year = new Date().getFullYear();
-  var promises = [];
-
   dbGetCounter().then(function(startN) {
+    var BATCH_SIZE = 400; // Firestore batch limit is 500
+    var batches = [];
+    var allApps = [];
+
     rows.forEach(function(r, i) {
       var n = startN + i + 1;
       var diaryNo = 'AKF-' + year + '-' + String(n).padStart(4,'0');
       var app = {
         diaryNo:       diaryNo,
-        name:          r.name,
-        cnic:          r.cnic,
-        phone:         r.phone,
-        type:          r.type,
-        recBy:         r.recBy,
-        zone:          r.zone,
-        uc:            r.uc,
-        nazim:         r.nazim,
+        name:          r.name || '',
+        cnic:          r.cnic || '',
+        phone:         r.phone || '',
+        type:          r.type || 'Financial Help',
+        recBy:         r.recBy || '',
+        zone:          r.zone || '',
+        uc:            r.uc || '',
+        nazim:         r.nazim || '',
         amount:        r.amount || '',
-        status:        r.status,
+        status:        r.status || 'Pending',
         remarks:       r.remarks || '',
         receivingDate: r.receivingDate || today(),
         receivingISO:  new Date().toISOString().split('T')[0],
         statusDate:    today(),
-        deliveredDate: '',
+        deliveredDate: r.status === 'Delivered/Paid' ? (r.receivingDate || today()) : '',
         notes:         'Imported from historical data',
-        imported:      true
+        imported:      true,
+        createdAt:     new Date()
       };
-      promises.push(dbAddApp(app));
+      allApps.push(app);
     });
 
-    // Update counter
-    if (db) {
-      db.collection('settings').doc('counter').set({ value: startN + rows.length }, { merge: true });
-    } else {
-      localStorage.setItem('akf_counter', String(startN + rows.length));
+    if (!db) {
+      // localStorage fallback
+      var existing = getApps();
+      saveApps(existing.concat(allApps));
+      localStorage.setItem('akf_counter', String(startN + allApps.length));
+      invalidateCache();
+      toast('✅ Imported ' + allApps.length + ' records!');
+      btn.textContent = '✅ Import Complete!';
+      importReset(); renderDash();
+      return;
     }
 
-    Promise.all(promises).then(function() {
-      auditLog('import', 'Imported ' + rows.length + ' historical records');
-      toast('✅ Imported ' + rows.length + ' records successfully!');
-      btn.textContent = '✅ Import Complete!';
-      importReset();
-      renderDash();
-    }).catch(function(e) {
-      toast('❌ Import error: ' + e.message);
-      btn.disabled = false;
-      btn.textContent = '✅ Retry Import';
-    });
+    // Split into batches of 400
+    for (var b = 0; b < allApps.length; b += BATCH_SIZE) {
+      batches.push(allApps.slice(b, b + BATCH_SIZE));
+    }
+
+    var batchNum = 0;
+    function nextBatch() {
+      if (batchNum >= batches.length) {
+        // Update counter
+        db.collection('settings').doc('counter').set({ value: startN + allApps.length }, { merge: true });
+        invalidateCache();
+        auditLog('import', 'Imported ' + allApps.length + ' historical records in ' + batches.length + ' batches');
+        toast('✅ Imported ' + allApps.length + ' records successfully!');
+        btn.textContent = '✅ Import Complete!';
+        importReset(); renderDash();
+        return;
+      }
+      var batch = db.batch();
+      batches[batchNum].forEach(function(app) {
+        var ref = db.collection('applications').doc(app.diaryNo);
+        batch.set(ref, app);
+      });
+      batchNum++;
+      btn.textContent = '⏳ Importing batch ' + batchNum + '/' + batches.length + '…';
+      batch.commit().then(nextBatch).catch(function(e) {
+        toast('❌ Batch error: ' + e.message);
+        btn.disabled = false;
+        btn.textContent = '✅ Retry Import';
+      });
+    }
+    nextBatch();
   });
 }
 
@@ -1665,8 +2030,14 @@ function renderFiles() {
      {html:a.amount?'Rs. '+esc(a.amount):'—'},{html:esc(a.statusDate||'—')},
      {html:'<span style="font-size:0.79rem;">'+esc(a.remarks||'—')+'</span>'}
     ].forEach(function(v){var td=document.createElement('td');td.innerHTML=v.html;if(v.cls)td.className=v.cls;tr.appendChild(td);});
-    var vtd=document.createElement('td'); var vb=document.createElement('button'); vb.className='btn btn-sm btn-p'; vb.textContent='👁';
-    vb.addEventListener('click',(function(id){return function(){viewApp(id);};})(a.diaryNo)); vtd.appendChild(vb); tr.appendChild(vtd);
+    var vtd=document.createElement('td');
+    var vb=document.createElement('button'); vb.className='btn btn-sm btn-p'; vb.textContent='👁';
+    vb.addEventListener('click',(function(id){return function(){viewApp(id);};})(a.diaryNo)); vtd.appendChild(vb);
+    if (AKF_USER_ROLE === 'super_admin') {
+      var efb=document.createElement('button'); efb.className='btn btn-sm btn-o'; efb.textContent='✏️'; efb.style.marginLeft='3px';
+      efb.addEventListener('click',(function(id){return function(){openEdit(id);};})(a.diaryNo)); vtd.appendChild(efb);
+    }
+    tr.appendChild(vtd);
     var atd=document.createElement('td');
     if(a.status==='Approved'){
       var db2=document.createElement('button'); db2.className='btn btn-sm btn-navy'; db2.textContent='📦 Mark Delivered';
@@ -1688,29 +2059,72 @@ function markDelivered(diaryNo) {
 
 // ── MASTER DATA ───────────────────────────────────────────────
 function renderMaster() {
-  var q=document.getElementById('mastSearch').value.toLowerCase();
-  var sf=document.getElementById('mastStatus').value;
-  var apps=getApps();
-  var data=masterP!=='All'?apps.filter(function(a){return a.type===masterP;}):apps;
-  data=data.filter(function(a){
-    var m=[a.name,a.diaryNo,a.cnic,a.phone,a.recBy||'',a.nazim||'',a.zone||'',a.uc||''].some(function(v){return v.toLowerCase().indexOf(q)>-1;});
-    return m&&(!sf||a.status===sf);
+  var q  = document.getElementById('mastSearch').value.toLowerCase();
+  var sf = document.getElementById('mastStatus').value;
+  var apps = getApps();
+  var data = masterP !== 'All' ? apps.filter(function(a){ return a.type === masterP; }) : apps;
+  data = data.filter(function(a){
+    var m = [a.name,a.diaryNo,a.cnic,a.phone,a.recBy||'',a.nazim||'',a.zone||'',a.uc||''].some(function(v){
+      return v.toLowerCase().indexOf(q) > -1;
+    });
+    return m && (!sf || a.status === sf);
   });
-  var tb=document.getElementById('mastTbody');
-  if(!data.length){tb.innerHTML='<tr><td colspan="15"><div class="empty"><div class="ico">📋</div><p>No records found.</p></div></td></tr>';return;}
-  tb.innerHTML='';
-  data.slice().reverse().forEach(function(a){
-    var tr=document.createElement('tr');
-    [{html:esc(a.diaryNo),cls:'td-diary'},{html:esc(a.name)},{html:esc(a.cnic),style:'font-size:0.77rem;'},
-     {html:esc(a.phone)},{html:tIcon(a.type)+' '+esc(a.type)},{html:esc(a.recBy)},
-     {html:esc(a.nazim||'—')},{html:esc(a.uc||'—')},{html:esc(a.zone||'—')},
-     {html:a.amount?'Rs. '+esc(a.amount):'—'},{html:esc(a.receivingDate)},{html:badgeHTML(a.status)},
-     {html:esc(a.deliveredDate||'—')},{html:'<span style="font-size:0.79rem;">'+esc(a.remarks||'—')+'</span>'}
-    ].forEach(function(v){var td=document.createElement('td');td.innerHTML=v.html;if(v.cls)td.className=v.cls;if(v.style)td.style.cssText=v.style;tr.appendChild(td);});
-    var vtd=document.createElement('td'); var vb=document.createElement('button'); vb.className='btn btn-sm btn-p'; vb.textContent='👁';
-    vb.addEventListener('click',(function(id){return function(){viewApp(id);};})(a.diaryNo)); vtd.appendChild(vb); tr.appendChild(vtd); tb.appendChild(tr);
-  });
+  var tb = document.getElementById('mastTbody');
+  if (!data.length) {
+    tb.innerHTML = '<tr><td colspan="15"><div class="empty"><div class="ico">📋</div><p>No records found.</p></div></td></tr>';
+    return;
+  }
+  tb.innerHTML = '<tr><td colspan="15"><div class="tbl-loading"><div class="mini-spin"></div><p>Rendering ' + data.length + ' records…</p></div></td></tr>';
+  setTimeout(function() {
+    tb.innerHTML = '';
+    data.slice().reverse().forEach(function(a) {
+      var tr = document.createElement('tr');
+      [
+        {html:esc(a.diaryNo), cls:'td-diary'},
+        {html:esc(a.name)},
+        {html:esc(a.cnic), style:'font-size:0.77rem;'},
+        {html:esc(a.phone)},
+        {html:tIcon(a.type)+' '+esc(a.type)},
+        {html:esc(a.recBy)},
+        {html:esc(a.nazim||'—')},
+        {html:esc(a.uc||'—')},
+        {html:esc(a.zone||'—')},
+        {html:a.amount ? 'Rs. '+esc(a.amount) : '—'},
+        {html:esc(a.receivingDate)},
+        {html:badgeHTML(a.status)},
+        {html:esc(a.deliveredDate||'—')},
+        {html:'<span style="font-size:0.79rem;">'+esc(a.remarks||'—')+'</span>'}
+      ].forEach(function(v){
+        var td = document.createElement('td');
+        td.innerHTML = v.html;
+        if (v.cls)   td.className    = v.cls;
+        if (v.style) td.style.cssText = v.style;
+        tr.appendChild(td);
+      });
+      var vtd = document.createElement('td');
+      var div = document.createElement('div');
+      div.className = 'tbl-actions';
+      var vb = document.createElement('button');
+      vb.className = 'btn btn-sm btn-p'; vb.textContent = '👁';
+      vb.addEventListener('click', (function(id){ return function(){ viewApp(id); }; })(a.diaryNo));
+      div.appendChild(vb);
+      if (AKF_USER_ROLE === 'super_admin') {
+        var eb = document.createElement('button');
+        eb.className = 'btn btn-sm btn-o'; eb.textContent = '✏️';
+        eb.addEventListener('click', (function(id){ return function(){ openEdit(id); }; })(a.diaryNo));
+        div.appendChild(eb);
+        var db3 = document.createElement('button');
+        db3.className = 'btn btn-sm btn-r'; db3.textContent = '🗑';
+        db3.addEventListener('click', (function(id){ return function(){ deleteApp(id); }; })(a.diaryNo));
+        div.appendChild(db3);
+      }
+      vtd.appendChild(div);
+      tr.appendChild(vtd);
+      tb.appendChild(tr);
+    });
+  }, 20);
 }
+
 
 // ── VIEW MODAL ────────────────────────────────────────────────
 function viewApp(diaryNo) {
@@ -1727,6 +2141,27 @@ function viewApp(diaryNo) {
     ['Remarks',a.remarks||'—'],['Notes',a.notes||'—'],
     ['Imported',a.imported?'Yes (Historical Data)':'No']];
   document.getElementById('vmBody').innerHTML=pairs.map(function(p){return '<div class="drow"><div class="dk">'+p[0]+'</div><div class="dv">'+(p[1]||'—')+'</div></div>';}).join('');
+  // Add Edit button for super admin
+  var vmBtns = document.getElementById('viewModalBtns');
+  if (vmBtns) {
+    var existingEdit = vmBtns.querySelector('.vm-edit-btn');
+    if (existingEdit) existingEdit.remove();
+    if (AKF_USER_ROLE === 'super_admin') {
+      var editBtn = document.createElement('button');
+      editBtn.className = 'btn btn-o btn-sm vm-edit-btn';
+      editBtn.textContent = '✏️ Edit';
+      editBtn.addEventListener('click', (function(id){ return function(){
+        document.getElementById('viewModal').classList.remove('open');
+        openEdit(id);
+      };})(diaryNo));
+      vmBtns.insertBefore(editBtn, vmBtns.firstChild);
+      var delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-r btn-sm vm-edit-btn';
+      delBtn.textContent = '🗑 Delete';
+      delBtn.addEventListener('click', (function(id){ return function(){ deleteApp(id); };})(diaryNo));
+      vmBtns.insertBefore(delBtn, vmBtns.children[1]);
+    }
+  }
   document.getElementById('viewModal').classList.add('open');
 }
 
