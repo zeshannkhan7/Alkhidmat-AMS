@@ -2972,18 +2972,10 @@ function clearImportedData() {
 
 // ══ INIT ══════════════════════════════════════════════════════
 window.addEventListener('load', function() {
-  var hasRealConfig = (
-    typeof firebase !== 'undefined' &&
-    typeof AKF_FIREBASE_CONFIG !== 'undefined' &&
-    AKF_FIREBASE_CONFIG.apiKey &&
-    AKF_FIREBASE_CONFIG.apiKey !== 'REPLACE_WITH_YOUR_API_KEY' &&
-    AKF_FIREBASE_CONFIG.projectId &&
-    AKF_FIREBASE_CONFIG.projectId !== 'REPLACE_WITH_YOUR_PROJECT_ID'
-  );
-  if (hasRealConfig) {
+  if (typeof firebase !== 'undefined' && typeof AKF_FIREBASE_CONFIG !== 'undefined') {
     initFirebase();
   } else {
-    console.warn('Firebase not configured or using placeholder values - running in local mode');
+    console.warn('Firebase SDK not loaded - running in local mode');
     fallbackToLocal();
   }
 });
