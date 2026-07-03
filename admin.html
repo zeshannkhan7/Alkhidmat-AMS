@@ -2893,13 +2893,13 @@ function renderRecovery() {
     var dLeft = 30 - dAgo;
     html += '<div style="background:#fff;border-radius:8px;border:1px solid var(--light);padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">'+
       '<div style="flex:1;">'+
-        '<strong style="font-family:'Playfair Display',serif;color:var(--bd);">'+esc(b.diaryNo)+'</strong>'+
+        '<strong style="font-family:Playfair Display,serif;color:var(--bd);">'+esc(b.diaryNo)+'</strong>'+
         '<span style="color:var(--gray);margin-left:8px;font-size:.83rem;">'+esc(b.name)+'</span>'+
         '<div style="font-size:.75rem;color:var(--gray);margin-top:3px;">'+tIcon(b.type)+' '+esc(b.type)+' &nbsp;|&nbsp; Deleted by: '+esc(b._deletedBy)+' &nbsp;|&nbsp; <span style="color:'+(dLeft<5?'var(--red)':'var(--gray)')+';">'+dLeft+' days left</span></div>'+
       '</div>'+
       '<div style="display:flex;gap:6px;">'+
-        '<button class="btn btn-g btn-sm" onclick="restoreFromBin(''+b.diaryNo+'')">♻️ Restore</button>'+
-        (isSA?'<button class="btn btn-r btn-sm" onclick="permDeleteFromBin(''+b.diaryNo+'')">🗑 Remove</button>':'')+
+        '<button class="btn btn-g btn-sm" onclick="restoreFromBin(\"'+b.diaryNo+'\")">♻️ Restore</button>'+
+        (isSA?'<button class="btn btn-r btn-sm" onclick="permDeleteFromBin(\"'+b.diaryNo+'\")">🗑 Remove</button>':'')+
       '</div>'+
     '</div>';
   });
