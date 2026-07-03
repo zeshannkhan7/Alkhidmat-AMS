@@ -640,7 +640,13 @@ thead{position:sticky;top:0;z-index:5;}
     <div class="sec" id="sec-proc">
       <div class="shdr">
         <h2>Process Applications</h2>
-        <span style="font-size:0.82rem;background:var(--abg);color:var(--amber);padding:4px 12px;border-radius:20px;font-weight:700;">⏳ Pending Only</span>
+      </div>
+      <!-- Status Filter Tabs -->
+      <div class="ftabs" id="procStatusTabs" style="margin-bottom:14px;">
+        <div class="ftab act-p" onclick="setProcStatus('Pending')"   id="pst-Pending">⏳ Pending</div>
+        <div class="ftab act-a" onclick="setProcStatus('Approved')"  id="pst-Approved">✅ Approved</div>
+        <div class="ftab act-r" onclick="setProcStatus('Rejected')"  id="pst-Rejected">❌ Rejected</div>
+        <div class="ftab act-d" onclick="setProcStatus('Delivered/Paid')" id="pst-Delivered">📦 Delivered/Paid</div>
       </div>
       <div class="srow2">
         <input type="text" id="procSearch" placeholder="Search name, diary no., CNIC..." oninput="renderProc()">
@@ -2013,6 +2019,38 @@ function clearForm() {
 }
 
 // ── PROCESS ───────────────────────────────────────────────────
+function setProcStatus(st) {
+  fileST = st;
+  var clsMap = {'Pending':'act-p','Approved':'act-a','Rejected':'act-r','Delivered/Paid':'act-d'};
+  var idMap  = {'Pending':'Pending','Approved':'Approved','Rejected':'Rejected','Delivered/Paid':'Delivered'};
+  ['Pending','Approved','Rejected','Delivered/Paid'].forEach(function(s) {
+    var el = document.getElementById('pst-' + idMap[s]);
+    if (!el) return;
+    el.classList.remove('act-p','act-a','act-r','act-d');
+    if (s === st) el.classList.add(clsMap[s]);
+  });
+  renderProc();
+}
+
+function markDelivered(diaryNo) {
+  if (!confirm('Mark ' + diaryNo + ' as Delivered/Paid?\nThis will move it from Approved to Delivered.')) return;
+  var updates = {
+    status: 'Delivered/Paid',
+    deliveredDate: today(),
+    statusDate: today(),
+    processedBy: AKF_USER_NAME
+  };
+  dbUpdateApp(diaryNo, updates).then(function() {
+    invalidateCache();
+    toast('📦 ' + diaryNo + ' marked as Delivered/Paid!');
+    auditLog('update', diaryNo + ' marked Delivered/Paid by ' + AKF_USER_NAME);
+    renderProc();
+    renderDash();
+  }).catch(function(e) {
+    toast('❌ Error: ' + e.message);
+  });
+}
+
 function renderProc() {
   var q    = document.getElementById('procSearch').value.toLowerCase();
   var src  = document.getElementById('procDataSrc').value; // '', 'new', 'old'
@@ -2102,8 +2140,10 @@ function renderProc() {
       vb2.addEventListener('click',(function(id){return function(){viewApp(id);};})(a.diaryNo));
       div2.appendChild(vb2);
       if (a.status === 'Approved') {
-        var mdb = document.createElement('button'); mdb.className='btn btn-sm btn-navy'; mdb.textContent='📦';
-        mdb.title='Mark Delivered';
+        var mdb = document.createElement('button');
+        mdb.className='btn btn-sm btn-navy';
+        mdb.textContent='📦 Mark Delivered/Paid';
+        mdb.style.cssText='font-weight:700;';
         mdb.addEventListener('click',(function(id){return function(){markDelivered(id);};})(a.diaryNo));
         div2.appendChild(mdb);
       }
